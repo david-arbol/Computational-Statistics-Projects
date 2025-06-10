@@ -3,10 +3,10 @@ Projects of the course Computational Statistics as part of the Double Degree of 
 
 **Final Score of the course**: 9.8/10.
 
-**Project 1**: Symbolic Differentiation and Critical Point Analysis in R
+**- Project 1**: Symbolic Differentiation and Critical Point Analysis in R
 Objective: This project aims to demonstrate proficiency in using the calculus R package for symbolic differentiation and the subsequent calculation of critical points for a given function.
 
-**Project 2**: Exam
+**- Project 2**: Exam
 
 Questions: 
   1. Statistical analysis of the iris dataset.
