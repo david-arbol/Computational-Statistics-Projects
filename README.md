@@ -1,6 +1,8 @@
 # Computational-Statistics-Projects
 Projects of the course Computational Statistics as part of the Double Degree of Physics and Mathematics at the University of Granada.
 
+Final Score of the course: 9.8/10.
+
 Project 1: Symbolic Differentiation and Critical Point Analysis in R
 Objective: This project aims to demonstrate proficiency in using the calculus R package for symbolic differentiation and the subsequent calculation of critical points for a given function.
 
