@@ -1,0 +1,158 @@
+---
+title: "Examen Parcial 2 - Estadística Computacional"
+author: "David Jesús Árbol Guerrero"
+date: "2023-06-01"
+output: html_document
+---
+
+## Ejercicio 1.
+
+Establecemos el conjunto de datos `iris` como marco de trabajo y vemos su estructura:
+
+```{r}
+data(iris)
+attach(iris)
+str(iris)
+```
+
+### 1)
+Se debe realizar un análisis de la varianza de una vía, test que se utiliza para determinar si exiten diferencias estadísticamente significativas entre las medias de varios grupos. De esta forma se realiza el test de contraste:
+\begin{align*}
+  H_0:\;& \mu_1=\mu_2=...=\mu_n \\
+  H_1:\;& \mu_i\ne\mu_j \mbox {  para algún par } i,j
+\end{align*}
+
+Con el lenguaje de R se puede visualizar una primera aproximación cualitativa utilizando `boxplot()`, un diagrama de cajas múltiple que compare las longitudes de los sépalos para cada variable factor de las diferentes especies. Veremos así si tienen más o menos igual dispersión y si existe un rango en que las cajas coinciden sus valores, podría ser que cumpliera la hipótesis nula. Además, se pueden comprobar cualitativamente las hipótesis del modelo:
+
+- No hay datos anómalos (outliers).
+- No hay asimetría: Se debe cumplir la hipótesis de normalidad.
+- Las varianzas (dispersión) deben ser iguales o, al menos, del mismo orden: Se identifica con el ancho de las cajas.
+
+Para resolver este problema con R se utiliza la función `anova()`, que devuelve el estadístico de contraste y el p-valor para este test de contraste.
+
+### 2)
+El diagrama de cajas múltiple se presenta:
+```{r}
+#Diagrama de cajas múltiple
+boxplot(Sepal.Length~Species,data=iris, xlab='Especie', ylab='Longitud de sépalo')
+
+```
+
+Las hipótesis presentadas en el apartado anterior se cumplen porque: Todas las cajas tienen un tamaño más o menos del mismo orden (aunque el de setosa sea algo menor); las diferencias podrían deberse a dispersión. Hay simetría respecto de la mediana (línea negra). No hay datos anómalos, sólo 1 en "virginica", despreciable.
+
+Se observa que la versicolor y virginica tienen cajas que coinciden en parte en el rango de dispersión pero las medianas no caen dentro de las otras cajas para ninguna de ellas. Por ello, seguramente, tras hacer un test que compare las tres, no se obtengan medias iguales. Visto esto, se vaticina que no habrá igualdad de medias para todas a la vez, ni tampoco 2 a 2.
+
+
+### 3) Realizamos el test:
+
+```{r}
+fit<-lm(Sepal.Length~Species, data=iris)
+anova(fit)
+```
+Se obtiene un p-valor de $2.2\cdot 10^{-16}<0.05$, por lo que se rechaza la hipótesis nula al $95\%$ de nivel de confianza y por tanto existe alguna distinción en las medias de las longitudes de los sépalos de las 3 especies. Esto era lo esperado: existen diferencias significativas. Esto era lo esperado.
+
+Comprobemos, con un test `pairwise.t.test()`, que hace un test de hipótesis dos a dos:
+\begin{align*}
+  H_0:\;& \mu_1=\mu_2 \\
+  H_1:\;& \mu_1\ne\mu_2
+\end{align*}
+si las medias son iguales para alguna de ellas 2 a 2.
+
+
+
+```{r}
+pairwise.t.test(Sepal.Length,Species, data=iris)
+```
+Según los p-valores, todos menores que $0.05$ y cercanos a cero, ninguna de ellas presenta igual media (2 a 2) y en todas se rechaza la hipótesis nula al $95\%$ de nivel de confianza de que las medias son iguales. En conclusión, sí existen diferencias significativas en la longitud del sépalo para todas ellas. La raíz de estas diferencias es que la longitud del sépalo sí depende significativamente de la especie de flor.
+
+## Ejercicio 2.
+
+```{r}
+#Leo el archivo "notas.txt"
+notas<-read.table("notas.txt", header=T)
+typeof(notas) #Es tipo lista
+#Así obtenemos un vector numérico
+notas<-notas[[1]] 
+presentados<-sum(!is.na(notas)) #28
+nopresentados<-sum(is.na(notas)) #7
+#Eliminamos los valores NA del vector
+notas<-notas[!is.na(notas)]
+
+#Calculo media y cuantiles
+media<-mean(notas)
+q1<-quantile(notas,0.25)
+q2<-quantile(notas,0.5)
+q3<-quantile(notas,0.75)
+
+
+#Creamos el histograma
+hist(notas, breaks=10, freq=T, col='white', main='Calificaciones estadística', xlab='Nota', ylab='Recuentp')
+
+abline(v=c(media,q1,q2,q3), col=c('red','blue','blue','blue'), lty=c(2,3,3,3))
+
+legend('topleft', c('Media', 'Cuartiles (Q1,Q2,Q3)'), bty='n', lty=c(2,3), col=c('red','blue'))
+
+text(2.2 ,c(4.5,3.5),labels=c('28 Presentados', '7 No presentados'))
+text(2.2 ,c(4.5,3.5),labels=c('28 Presentados', '7 No presentados'))
+
+```
+
+
+## Ejercicio 3.
+
+```{r}
+h<-function(x) (x+2)^3*(x>0 & x<1)
+
+#Visualizamos la función en el dominio de integración
+curve(h,0,1, xlim=c(0,1))
+legend('topleft', legend=expression(h(x)==(x+2)^3), bty='n')
+
+#Simulación
+nsim<-100      #Número de simulaciones
+set.seed(1)    #Fijamos semilla
+x<-runif(nsim) #x1,...,xn
+hx<-h(x)       #h(x1),...,h(xn)
+int<-mean(hx); int #Valor aproximado tras 100 simulaciones
+16.25              #Valor real (fácil de hacer a mano)
+
+
+```
+Se observa que, considerando las pocas simulaciones utilizadas, el método converge de forma satisfactoria, pareciéndose mucho el valor aproximado al real.
+
+## Ejercicio 4.
+
+### 1) Simulación de la distribución de Weibull por por el método de inversión:
+```{r}
+n<-1000 #Número de simulaciones
+set.seed(1)
+lambda<-0.5
+alpha<-2
+
+u<-runif(n)  #Ditribución uniforme
+
+x<-(-log(1-u))^(1/alpha)/lambda      #Simulación de los valores
+
+```
+
+
+### 2) Gráficos y  contraste para la comprobación:
+```{r}
+
+hist(x,freq=FALSE,breaks='FD', main= 'Histograma de la simulación', ylab='Densidad de frecuencia', xlab='Valor de x')
+lines(density(x),col='blue')
+curve(dweibull(x,scale=1/lambda,shape=alpha),col='red',add=T)
+legend('topright', c('Función densidad Weibull teórica','Densidad muestral suavizada'), col=c('red','blue'), lty=1)
+
+ks.test(x,pweibull,scale=1/lambda,shape=alpha) #pvalor=0.5928 !Sigue exponencial! (No se rechaza H0)
+
+```
+
+Se observa en el histograma de forma cualitativa que la simulación se ajusta muy bien a la función de densidad teórica.
+
+Además, como el test de Kolmogorov-Smirnov se basa en el test de contraste:
+
+\begin{align}
+  H_0:& \mbox{ Sigue una distribución de Weibull}\\
+  H_1:& \mbox{ No sigue una distribución de Weibull}
+\end{align}
+al obtener un p-valor $>0.05$, no se rechaza la hipótesis nula, es decir, los valores simulados siguen una distribución de Weibull.

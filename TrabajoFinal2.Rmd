@@ -1,0 +1,478 @@
+---
+title: "Derivación simbólica y cálculo de puntos críticos"
+author: "David Jesús Árbol Guerrero, Eduardo Merino Ruiz y José Manuel Nieves González."
+date: "28/05/2023"
+output: 
+    html_document:
+      toc: yes
+      toc_depth: 4
+      number_sections: no
+      toc_float:
+        collapsed: yes
+        smooth_scroll: yes
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# **Planteamiento del problema.**
+Escasas son las herramientas de tipo software que tienen implementadas funciones no solamente de cálculo numérico, sino también de cálculo simbólico. En esta vignette pretendemos mostrar el potencial que presenta R de cara a la derivación numérica y simbólica. Para ello, presentaremos dos paquetes: `Deriv` y `calculus`.
+
+## *1) Paquete  `Deriv`.*
+Antes de nada, instalamos y cargamos el paquete.
+```{r, eval=TRUE,echo=TRUE}
+# install.packages('Deriv')
+library(Deriv)
+```
+### Descripción del paquete.
+
+El paquete `Deriv` nos permite obtener soluciones útiles de cara a la diferenciación simbólica. Admite funciones definidas por el usuario previamente y tiene una función que permite simplificar expresiones.
+
+#### `Deriv`.
+La función `Deriv` permite obtener la derivada simbólica de una función. La descripción de la función, con sus principales componentes, es la siguiente:
+```{r, echo=TRUE,eval=TRUE}
+# Deriv(f, x, nderiv)
+```
+donde se tiene que:
+
+1. f es la expresión de una función a derivar. Puede ser, entre otras:
+
+    Una función definida por el usuario.
+    
+    Una `expression`
+
+2. x es opcional y representa la variable respecto a la que se deriva. Si no es especificada, se deriva respecto de las variables indicadas en `formals(f)`.
+
+3. nderiv es opcional e indica el orden de derivación.
+
+Mostramos varios ejemplos para mostrar su versatilidad.
+```{r, echo=TRUE,eval=TRUE}
+# Derivamos la función sin(x)*cos(y) respecto a cada variables
+f<-function(x,y) sin(x)*cos(y)
+Deriv(f)
+
+# Podemos almacenar el objeto Deriv(f) en una función y evaluarla posteriormente.
+fparciales<-Deriv(f)
+fparciales(3,4)
+
+# También podemos especificar la variable a derivar.
+Deriv('sin(x^2)*y','x')
+```
+
+## *2) Paquete  `calculus`.*
+Antes que nada, para poder aplicar las funciones de este paquete, procedemos con la instalación y carga del mismo.
+```{r, echo=TRUE,eval=TRUE}
+# install.packages('calculus')
+library(calculus)
+```
+
+### Descripción del paquete.
+El paquete `calculus` está destinado completamenta al cálculo numérico. En este paquete, encontramos funciones que van desde la aritmética más básica hasta el cálculo tensorial, llegando incluso a tener una función que permite calcular la conexión de Levi-Civita en el marco de la geometría diferencial. Nosotros nos vamos a centrar en el cálculo de series de Taylor, así como de divergencias, jacobianos y laplacianos de funciones.
+
+### Principales funciones.
+
+#### a) Series de Taylor.
+La función `taylor` computa la serie de Taylor de la función especificada según el orden que necesitemos. Aunque puede emplearse para funciones de varias variables, nosotros nos centraremos en el caso unidimensional. Así, si $f:\mathbb{R}\to\mathbb{R}$ es una función infinitamente diferenciable en el entorno de una número real $a$, se define la serie de Taylor de $f$ centrada en $a$ como la serie de potencias:
+\[f(a)+\frac{f'(a)}{1!}(x-a)+\dots+\frac{f^{n)}(a)}{n!}(x-a)^n+\dots=\sum_{n=1}^{\infty}\frac{f^{n)}(a)}{n!}(x-a)^n\]
+
+La descripción de la función, con sus principales argumentos, es la siguiente:
+```{r, echo=TRUE,eval=TRUE}
+# taylor(f, var, order)
+```
+donde se tiene que: 
+
+1. f es la función que se desea aproximar.
+
+2. var es un vector con las variables respecto a las cuales se desea derivar. También se especifica el punto en el que se desea centrar la serie.
+
+3. order hace referencia al orden de aproximación de la serie.
+
+La función devuelve un objeto de tipo lista con la serie de Taylor de $f$, el orden de aproximación, y los términos que componen la serie almacenados como objeto de tipo data.frame.
+
+Vamos a mostrar a continuación un ejemplo en el que aproximemos la función $e^{x}$ por su serie de Taylor de órdenes $2,4,6$, centrada en el origen. En primer lugar, vamos a ver el resultado que nos devolvería R, y luego graficamos para ver el ajuste.
+```{r , echo=TRUE,eval=TRUE}
+f<-function(x) exp(x)
+taylor1<-taylor(f,var=c(x=0),order=2)
+taylor2<-taylor(f,var=c(x=0),order=4)
+taylor3<-taylor(f,var=c(x=0),order=6)
+# Mostramos por pantalla la última serie pues abarca las anteriores
+taylor3
+```
+A continuación, graficamos la función y sus aproximaciones. Para ello debemos construir las funciones de cada serie:
+```{r, echo=TRUE,eval=TRUE,fig.width=5,fig.height=5}
+f1<-function(x) 1 + (0.999999999996052) * x^1 + (0.499999999979692) * x^2
+f2<-function(x) 1 + (0.999999999996052) * x^1 + (0.499999999979692) * x^2 + (0.166666665585433) * x^3 + (0.0416666593124569) * x^4
+f3<-function(x) 1 + (0.999999999996052) * x^1 + (0.499999999979692) * x^2 + (0.166666665585433) * x^3 + (0.0416666593124569) * x^4 + (0.00833328285918537) * x^5 + (0.00138886379238021) * x^6
+curve(f,-5,5,col='blue')
+curve(f1,-5,5,col='red',add=TRUE,lwd=2)
+curve(f2,-5,5,col='green',add=TRUE,lwd=2)
+curve(f3,-5,5,col='orange',add=TRUE,lwd=2)
+legend('topleft',c(expression(exp(x)),'O(x^2)','O(x^4)','O(x^6)'),col=c('blue','red','green','orange'),lwd=2,lty=1)
+```
+
+#### b) `jacobian` y `divergence`.
+El paquete *calculus* presenta las funciones `jacobian` y `divergence` que realizan el cálculo simbólico del jacobiano y la divergencia de una función respectivamente. Esta herramienta resulta muy útil cuando se requiere la expresión analítica de estos objetos para el caso de una función complicada.
+
+Sea una función en varias variables $\mathbf{f}:\mathbb{R}^n\longrightarrow \mathbb{R}^m$, definida para todo $\mathbf{x}=(x_1,...,x_n)$ por:
+$$
+\begin{aligned}
+\mathbf{f}(\mathbf{x})&=\mathbf{f}(x_1,x_2,\dots,x_n)\\
+&=(f_1(x_1,x_2,\dots,x_n),\dots,f_m(x_1,x_2,\dots,x_n))\\
+&=(f_1(\mathbf{x}),,\dots,f_m(\mathbf{x}))
+\end{aligned}
+$$
+El jacobiano se define como:
+$$
+\mathbb{J}=\left[\begin{array}{ccc}
+\dfrac{\partial \mathbf{f}(\mathbf{x})}{\partial x_{1}} & \cdots & \dfrac{\partial \mathbf{f}(\mathbf{x})}{\partial x_{n}}
+\end{array}\right]=\left[\begin{array}{c}
+\nabla^{T} f_{1}(\mathbf{x}) \\
+\vdots \\
+\nabla^{T} f_{m}(\mathbf{x})
+\end{array}\right]=\left[\begin{array}{ccc}
+\dfrac{\partial f_{1}(\mathbf{x})}{\partial x_{1}} & \cdots & \dfrac{\partial f_{1}(\mathbf{x})}{\partial x_{n}} \\
+\vdots & \ddots & \vdots \\
+\dfrac{\partial f_{m}(\mathbf{x})}{\partial x_{1}} & \cdots & \dfrac{\partial f_{m}(\mathbf{x})}{\partial x_{n}}
+\end{array}\right]
+$$
+donde $\nabla^{T} f_{i}(\mathbf{x})$ es la traspuesta del gradiente de la componente $i$ de la función.
+
+La divergencia está bien definida cuando $n=m$:
+$$
+\begin{aligned}
+\mbox{div }\mathbf{f}(\mathbf{x})&=\nabla\cdot\mathbf{f}(\mathbf{x})\\
+&=(\frac{\partial}{\partial x_1},\dots,\frac{\partial}{\partial x_n})(f_1(\mathbf{x}),\dots,f_n(\mathbf{x}))\\
+&=(\frac{\partial f_1}{\partial x_1}(\mathbf{x}),,\dots,\frac{\partial f_n}{\partial x_n}(\mathbf{x}))
+\end{aligned}
+$$
+
+Las funciones del paquete que calculan el jacobiano y la divergencia simbólica y numéricamente se presentan a continuación.
+
+##### b.1) Jacobiano
+La función que resuelve este problema es `jacobian` y su sintaxis con sus argumentos principales viene dada por:
+
+```{r}
+# jacobian(f,var,par,accuracy)
+```
+siendo los argumentos:
+
+1. *f* : la función a la que se aplica el jacobiano.
+    - En el cálculo simbólico se escribe la función en forma de vector de caracteres con la sintaxis matemática de $\mathcal{R}$, i.e., `g<-c("x+y^2","exp(y)")`. 
+    - En el cálculo numérico se escribe una función que devuelve un vector numérico, i.e., `g<-function(x,y) c(x+y^2,exp(y))`
+2. *var* : las variables de la función sobre las que se aplica el jacobiano (normalmente todas a no ser que se quiera hacer un jacobiano parcial). Como ejemplo para $n=3$, si se escribe `var=c(x,y,x)` realiza el cálculo simbólico, y para `var=c(x=1,y=2,x=3)`, el numérico.
+3. *par* : los parámetros de la función *f*, si existen. El valor por defecto es `list()`.
+4. *accuracy* : indica el nivel de precisión del cálculo numérico. Son números enteros. Cuanto más altos, mayor es el nivel de precisión. El valor por defecto es $4$.
+
+
+Se muestra ahora el jacobiano de la función $\mathbf{f}:\mathbb{R}^3\longrightarrow \mathbb{R}^2$:
+
+\begin{equation}
+  
+  f(x,y,z)=(x^2+log(x)y+y\sin z, 3xy+ze^z) 
+
+\end{equation}
+
+con su valor numérico para $(x,y,z)=(1,0,2)$:
+
+```{r}
+#Defino la función
+g <- c("x^2+log(x)*y+y*sin(z)" ,"3*x*y+z*exp(z)")
+h <- function(x, y, z) c(x^2+log(x)*y+y*sin(z) ,3*x*y+z*exp(z))
+# Jacobiano simbólico:
+jacobian(f=g, var = c("x", "y", "z"))
+# Jacobiano numérico en (x=1, y=0, z=2)
+jacobian(f=h, var = c(x=1, y=0, z=2))
+```
+Se observa que se obtienen expresiones y cálculos correctos. Aunque los valores de las entradas [1,3] y [2,1] deberían ser nulos, son valores muy cercanos a cero, por lo que se trata de errores computacionales internos. De hecho, aplicando el argumento `accuracy`, se resuelve el problema:
+```{r}
+# Jacobiano numérico en (x=1, y=0, z=2) con menos precisión (3)
+jacobian(f=h, var = c(x=1, y=0, z=2), accuracy = 3)
+```
+##### b.2) Divergencia
+La función que resuelve este problema es `divergence` y su sintaxis con sus argumentos principales viene dada por:
+
+```{r}
+# divergence(f,var,par,accuracy)
+```
+siendo los argumentos los mismos que para `jacobian`.
+
+Veamos la divergencia de la función $\mathbf{f}:\mathbb{R}^2\longrightarrow \mathbb{R}^2$:
+
+\begin{equation}
+  
+  f(x,y)=(x^2+log(x)y, 3yx) 
+
+\end{equation}
+
+con su valor numérico para $(x,y,z)=(1,0)$:
+
+```{r}
+#Defino la función
+g <- c("x^2+y*log(x)" ,"3*y*x")
+h <- function(x, y, z) c(x^2+y*log(x) ,3*y*x)
+# Divergencia simbólica:
+divergence(f=g, var = c("x", "y"))
+# Divergencia numérica en (x=1, y=0)
+divergence(f=h, var = c(x=1,y=0))
+```
+
+Se obtienen igualmente cálculos simbólicos y numéricos correctos.
+
+#### c) `laplacian`.
+Además de calcular el jacobiano y la divergencia, el paquete calculus también realiza el cálculo simbólico y numérico del laplaciano.
+
+Sea una función en varias variables $\textbf{f}:\mathbb{R}^{n}\to\mathbb{R}^{m}$, definida para todo $\textbf{x}=(x_{1},\dots,x_{n})$ por:
+$$
+\begin{aligned}
+\mathbf{f}(\mathbf{x})&=\mathbf{f}(x_1,x_2,\dots,x_n)\\
+&=(f_1(x_1,x_2,\dots,x_n),\dots,f_m(x_1,x_2,\dots,x_n))\\
+&=(f_1(\mathbf{x}),,\dots,f_m(\mathbf{x}))
+\end{aligned}
+$$
+El laplaciano se define como:
+\[\nabla^2\textbf{f}=(\nabla^2f_{1},\dots,\nabla^2f_{m})\]
+donde $\nabla^2f_{i}(\textbf{x})$ se calcula como sigue:
+\[\nabla^2f_{i}(x_{1},\dots,x_{n})=\sum_{k=1}^{n}\frac{\partial^2f_{i}}{\partial x_{k}^2}\]
+La función del paquete que calcula el laplaciano es `laplacian`, y su sintaxis, con sus respectivos argumentos viene dada por:
+```{r}
+# laplacian(f,var,params,coordinates,accuracy,stepsize,drop)
+```
+siendo los argumentos:
+
+  1. f: La función a la que se aplica el laplaciano. En el caso del cálculo simbólico se debe escribir un vector de caracteres, de la forma `g<-c("x^2+y","y+x^2")`. En cambio, para el cálculo numérico se escribe una función cuya salida sea un vector numérico, por ejemplo,`g<-function(x,y) c("x^2+y","y+x^2")`.
+  2. var: Las variables de la función sobre las que se aplica el laplaciano. Si estuviéramos en dimensión 3, `var=c("x","y","z")` para el cálculo simbólico y `var=c(x=1,y=1,z=1)` para el numérico.
+  3. params: Los parámetros de f si existen. El valor por defecto es `list()`
+  4. accuracy: Grado de precisión del cálculo numérico. Debe ser un valor entero, cuanto mayor sea el valor, mayor precisión habrá. Por defecto es `4`.
+  5. stepsize: el tamaño del paso de las diferencias finitas para las derivadas numéricas. Se basa en la precisión de la máquina de forma predeterminada. Por defecto vale `NULL`.
+  6. drop: es una variable booleana, si vale `TRUE`, devuelve el laplaciano como escalar y no como un array de funciones de valor escalar. Por defecto `drop=FALSE`.
+  
+Vamos a calcular el laplaciano simbólico para $\textbf{f}:\mathbb{R}^3\to\mathbb{R}$:
+\[f(x,y,z)=x^3+y^3+z^3\]
+con su valor numérico para (x,y,z)=(1,1,1)
+```{r}
+# Laplaciano simbólico:
+laplacian(f="x^3+y^3+z^3",var=c("x","y","z"))
+```
+```{r}
+# Laplaciano numérico en (x=1,y=1,z=1)
+laplacian(f="x^3+y^3+z^3",var=c(x=1,y=1,z=1))
+```
+Como se puede observar los cálculos son correctos. Para el caso en que el codominio es de mayor dimensión definidmos $\textbf{f}:\mathbb{R}^3\to\mathbb{R}^3$
+\[\textbf{f}(x,y,z)=(x^3-y-z.y^3-x-z,z^3-x-y)\]
+con su valor numérico para $(x,y,z)=(1,1,1)$.
+```{r}
+# Laplaciano simbólico:
+f <- c("x^3-y-z","y^3-x-z","z^3-x-y")
+laplacian(f = f, var = c("x","y","z"))
+```
+```{r}
+# Laplaciano numérico:
+f <- c("x^3-y-z","y^3-x-z","z^3-x-y")
+laplacian(f = f, var = c(x=1,y=1,z=1))
+```
+Se observa que en este caso se obtiene como salida un vector de caracteres en el cálculo simbólico, en particular, un vector de funciones. Por otro lado, en el cálculo numérico se obtiene un vector numérico. Ambos realizan el calculo correctamente.
+
+#### d) `hessian`
+Sea una función en varias variables $\mathbf{f}:\mathbb{R}^n\longrightarrow \mathbb{R}$, definida para todo $\mathbf{x}=(x_1,...,x_n)$ por:
+
+$$
+\begin{aligned}
+\mathbf{f}(\mathbf{x})&=\mathbf{f}(x_1,x_2,\dots,x_n)
+\end{aligned}
+$$
+El hessiano se define como:
+
+$$
+\text{Hess}f(x)= 
+\begin{pmatrix}
+    \displaystyle\frac{\partial^2 f}{\partial x_1^2}(x) & \displaystyle\frac{\partial^2 f}{\partial x_1\partial x_2}(x) & \cdots & \displaystyle\frac{\partial^2 f}{\partial x_1\partial x_n}(x) \\
+    \displaystyle\frac{\partial^2 f}{\partial x_2\partial x_1}(x) & \displaystyle\frac{\partial^2 f}{\partial x_2^2}(x) & \cdots & \displaystyle\frac{\partial^2 f}{\partial x_2\partial x_n}(x) \\
+    \vdots & \vdots & \ddots & \vdots \\
+    \displaystyle\frac{\partial^2 f}{\partial x_n\partial x_1}(x) & \displaystyle\frac{\partial^2 f}{\partial x_n\partial x_2}(x) & \cdots & \displaystyle\frac{\partial^2 f}{\partial x_n^2}(x)
+\end{pmatrix}
+$$
+La función del paquete que calcula el hessiano es `hessian`, y su sintaxis, con sus respectivos argumentos viene dada por:
+
+```{r}
+# hessian(f,var,params,coordinates,accuracy,stepsize,drop)
+```
+siendo los argumentos:
+
+1. *f* : la función de la que calcula el hessiando. En el caso del cáculo simbólico se debe escribir un vector de caracteres, de la forma `g<-c("x^2+y","y+x^2")`. En cambio, para el cáculo numérico se escribe una función cuyo salida sea un vector numérico, por ejemplo, `g<-function(x,y) c("x^2+y","y+x^2")`.
+2. *var* : las variables de la función sobre las que se aplica el hessiano Si estuvieramos en dimensión 3, se escribe `var=c("x","y","z")` para el cálculo simbólico, y `var=c(x=1,y=1,z=1)` para el numérico.
+3. *params* : los parámetros de la función *f*, si existen. El valor por defecto es `list()`.
+4. *accuracy* : grado de precisión del cálculo numérico. Debe ser un valor entero, cuanto mayor sea el valor, mayor precisión habrá. El valor por defecto es `4`.
+5. *stepsize* : el tamaño del paso de las diferencias finitas para las derivadas numéricas. Se basa en la precisión de la máquina de forma predeterminada. Su valor por defecto es `NULL`.
+6. *drop* : es una variable de tipo booleana, en caso de que valga `TRUE`, devuelve el laplaciano como un escalar, no como un array de funciones de valor escalar. Por defecto, `drop=TRUE`.
+
+Se muestra ahora el hessiano simbólico y numérico de la función $\mathbf{f}:\mathbb{R}^3\longrightarrow \mathbb{R}$:
+
+\begin{equation}
+  
+  f(x,y,z)=xyz
+
+\end{equation}
+
+con su valor numérico para $(x,y,z)=(1,2,3)$:
+
+```{r}
+# Hessiano simbólico:
+hessian("x*y*z", var = c("x", "y", "z"))
+
+# Hessiano numérico en (x=1,y=1,z=1)
+hessian("x*y*z", var = c(x=1, y=2, z=3))
+```
+Como se puede observar los calculos son correctos.
+
+## *3) Cálculo y clasificación de puntos críticos.*
+El problema que vamos a resolver es el de calcular y clasificar los puntos críticos de una función. Como referencia usaremos la función $\textbf{f}:\mathbb{R}^2\to\mathbb{R}$
+\[\textbf{f}(x,y)=(2x^2+2y^2-x^4-y^4+3)\]
+```{r}
+#install.packages(rgl)
+library(rgl)
+x<-seq(-3,3,length=220)
+y<-x
+f<-function(x,y) 2*x^2+2*y^2-x^4-y^4+3
+z<-outer(x,y,f)
+persp3d(x,y,z,zlim=c(0,5),col='blue')
+rglwidget()
+```
+Para identificar los puntos críticos tenemos que calcular las derivadas parciales, y resolver el sistema de ecuaciones correspondientes igualándolas a cero. Para el cálculo de las derivadas usaremos la función `Deriv` descrita anteriormente. Posteriormente se utiliza el paquete `nleqslv` para calcular numéricamente los puntos críticos como las raíces del sistema no lineal de 2 ecuaciones con 2 incógnitas de las derivadas parciales y se comprueba que coincide con el código propuesto.
+```{r}
+# Definimos la función
+f <- function(x,y) 2*x^2 + 2*y^2 - x^4 - y^4 + 3
+
+# Calculamos las derivadas parciales
+fx <- Deriv(f, "x")
+fy <- Deriv(f, "y")
+
+# Calcula los puntos críticos
+puntos_criticos <- function() {
+  # Rango de valores para x e y
+  x_range <- seq(-10, 10, by = 0.1)
+  y_range <- seq(-10, 10, by = 0.1)
+  
+  crit_points <- list()  # Almacena los puntos críticos encontrados
+  
+  # Calcula las derivadas parciales y busca los puntos donde se anulan
+  for (x in x_range) {
+    for (y in y_range) {
+      if (fx(x, y) == 0 && fy(x, y) == 0) {
+        crit_points[[length(crit_points) + 1]] <- c(x, y)
+      }
+    }
+  }
+  
+  return(crit_points)
+}
+
+#Calcula los puntos críticos con el paquete nleqslv
+#install.packages(nleqslv)
+library(nleqslv)
+df <- function(x) c(fx(x[1],x[2]),fy(x[1],x[2]))
+
+xstart <- c(-0.5,0.5)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(0.5,-0.5)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(-1.5,0)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(0,-1.5)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(1.5,0)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(0,1.5)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(-1.5,-1.5)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(1.5,1.5)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+xstart <- c(0.25,0.25)
+nleqslv(xstart, df, control=list(btol=.01))$x
+
+
+
+# Llama a la función para obtener los puntos críticos
+resultados <- puntos_criticos()
+
+# Imprime los puntos críticos encontrados
+cat("Puntos críticos encontrados:\n")
+```
+```{r}
+for (i in 1:length(resultados)) {
+  cat("Punto", i, ": (", resultados[[i]][1], ",", resultados[[i]][2], ")\n")
+}
+```
+Una vez que tenemos todos los puntos críticos, debemos hacer uso del hessiano para poder clasificar cada uno de los puntos. Como ya vimos anteriormente, la herramienta necesaria para ello es la función `hessian` del paquete `calculus`. Según el signo de sus autovalores podemos distinguir entre los distintos tipos de punto crítico:
+
+ 1. Si todos los autovalores son mayores que cero estaremos ante un mínimo.
+ 2. Si todos los autovalores son menores que cero estaremos ante un máximo.
+ 3. Si hay autovalores positivos y negativos se tratará de un punto de silla.
+ 4. Si no se da ninguna de estas situaciones deberemos hacer uso de otras herramientas para determinar qué tipo de punto crítico es.
+ 
+Veamos como son los puntos críticos de nuestra función:
+
+```{r}
+clasificar_punto_critico <- function(x, y) {
+  # Calculamos la matriz Hessiana en un punto
+  hessiano <- hessian(f, c(x=x,y=y))
+  # Calculamos sus autovalores
+  autovalores <- eigen(hessiano)$values
+  
+  # Clasificamos el punto crítico
+  if (all(autovalores > 0)) {
+    return("Mínimo")
+  } else if (all(autovalores < 0)) {
+    return("Máximo")
+  } else if (any(autovalores > 0) && any(autovalores < 0)) {
+    return("Punto de silla")
+  } else {
+    return("Indeterminado")
+  }
+}
+
+# Clasificamos todos los puntos críticos encontrados
+clasificar_puntos_criticos <- function(puntos_criticos) {
+  clasificacion <- list()
+  
+  for (i in 1:length(puntos_criticos)) {
+    punto_critico <- puntos_criticos[[i]]
+    x <- punto_critico[1]
+    y <- punto_critico[2]
+    
+    clasificacion[[i]] <- clasificar_punto_critico(x, y)
+  }
+  
+  return(clasificacion)
+}
+
+clasificaciones <- clasificar_puntos_criticos(resultados)
+
+# Imprime los puntos críticos con su clasificación
+cat("Puntos críticos encontrados:\n")
+```
+```{r}
+for (i in 1:length(resultados)) {
+  cat("Punto", i, ": (", resultados[[i]][1], ",", resultados[[i]][2], ") - Clasificación:", clasificaciones[[i]], "\n")
+}
+```
+## *Referencias.*
+1. Guidotti E (2022). "calculus: High-Dimensional Numerical and Symbolic Calculus in R." Journal
+of Statistical Software, 104(5), 1-37. doi:10.18637/jss.v104.i05 and 	<https://calculus.eguidotti.com>. Accedido el 26/05/2023.
+
+2. Clausen, Andrew and Sokol, Serguei (2020), "R-based Symbolic Differentiation" Deriv package version 4.1, <https://CRAN.R-project.org/package=Deriv>. Accedido el 26/05/2023.
